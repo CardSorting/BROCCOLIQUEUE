@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>BroccoliQueue</title>
+  <style>
+    :root{color-scheme:light;--bg:#f4f6f8;--surface:#fff;--surface-2:#f8fafb;--sidebar:#edf1f4;--line:#dfe5e8;--line-strong:#cbd4d9;--text:#182227;--muted:#58676d;--faint:#637178;--accent:#18734b;--accent-hover:#125e3d;--accent-soft:#e4f2e9;--focus:#16824f;--red:#b83c35;--red-soft:#fcebe9;--amber:#8b5c08;--amber-soft:#fbf2dd;--blue:#355c9b;--blue-soft:#eaf0fa;--shadow:0 16px 44px rgba(18,35,28,.13);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-synthesis:none;text-rendering:optimizeLegibility}
+    html[data-theme="dark"]{color-scheme:dark;--bg:#101512;--surface:#171e19;--surface-2:#1d2620;--sidebar:#151c17;--line:#29352d;--line-strong:#3a4a3f;--text:#edf4ef;--muted:#a4b4aa;--faint:#839589;--accent:#68c38a;--accent-hover:#87d6a3;--accent-soft:#1b3425;--focus:#8bdaa6;--red:#ff8981;--red-soft:#3c211f;--amber:#e8bb61;--amber-soft:#382e1a;--blue:#9bb8ee;--blue-soft:#202c40;--shadow:0 18px 52px rgba(0,0,0,.38)}
+    *{box-sizing:border-box}html{background:var(--bg);scrollbar-color:var(--line-strong) var(--bg)}body{margin:0;min-width:320px;background:var(--bg);color:var(--text);font-size:14px;line-height:1.45}button,input,select,textarea{font:inherit}button{color:inherit}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid color-mix(in srgb,var(--focus) 35%,transparent);outline-offset:2px}::selection{background:var(--accent-soft);color:var(--text)}
+    .shell{min-height:100vh}.sidebar{position:fixed;inset:0 auto 0 0;width:224px;padding:20px 14px 16px;background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:3}.brand{display:flex;align-items:center;gap:10px;padding:2px 8px 24px;font-size:15px;font-weight:680;letter-spacing:-.02em}.brand-mark{width:30px;height:30px;border-radius:9px;background:var(--accent);display:grid;place-items:center;color:white;box-shadow:0 2px 4px rgba(18,75,47,.18)}.brand-mark svg{width:20px;height:20px}.brand-caption{font-size:10px;line-height:1.2;color:var(--muted);font-weight:500;letter-spacing:.015em}.nav-label{padding:11px 10px 7px;color:var(--faint);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em}.nav{display:grid;gap:3px}.nav button{height:38px;width:100%;display:flex;align-items:center;gap:11px;padding:0 10px;border:0;border-radius:8px;background:transparent;text-align:left;color:var(--muted);cursor:pointer}.nav button:hover{background:color-mix(in srgb,var(--surface) 65%,transparent);color:var(--text)}.nav button[aria-current="page"]{background:var(--surface);box-shadow:0 1px 2px rgba(18,30,25,.07);color:var(--text);font-weight:620}.nav svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}.side-bottom{margin-top:auto;padding:13px 9px 2px;border-top:1px solid var(--line)}.runtime-row{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}.live-dot{width:8px;height:8px;border-radius:50%;background:#3ca86b;box-shadow:0 0 0 3px color-mix(in srgb,#3ca86b 15%,transparent)}.runtime-sub{padding:6px 0 0 16px;color:var(--faint);font-size:11px;line-height:1.5}.workspace{min-height:100vh;margin-left:224px}.topbar{height:58px;position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:0 30px;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}.crumb{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}.crumb strong{font-weight:600;color:var(--text)}.top-actions{display:flex;align-items:center;gap:8px}.icon-button,.quiet-button,.primary-button,.danger-button{height:34px;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);padding:0 11px;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:background .16s,border-color .16s,color .16s}.icon-button{width:34px;padding:0}.icon-button svg,.quiet-button svg,.primary-button svg,.danger-button svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.quiet-button:hover,.icon-button:hover{background:var(--surface-2);border-color:var(--faint)}.primary-button{background:var(--accent);border-color:var(--accent);color:white}.primary-button:hover{background:var(--accent-hover);border-color:var(--accent-hover)}.danger-button{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,var(--line));background:var(--surface)}.danger-button:hover{background:var(--red-soft)}button:disabled{opacity:.52;cursor:not-allowed}.main{max-width:1510px;margin:0 auto;padding:26px 30px 56px}.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:22px}.page-head h1{margin:0;font-size:23px;line-height:1.22;letter-spacing:-.025em;font-weight:660}.page-head p{margin:6px 0 0;color:var(--muted);font-size:13px}.head-actions{display:flex;align-items:center;gap:8px}.status-line{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;margin-bottom:18px}.status-line .live-dot{width:7px;height:7px}.status-line time{font-variant-numeric:tabular-nums}.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:9px;background:var(--surface);margin-bottom:20px;overflow:hidden}.summary-item{min-height:78px;padding:15px 18px;border-right:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}.summary-item:last-child{border-right:0}.summary-label{font-size:12px;color:var(--muted)}.summary-value{font-size:22px;line-height:1;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.035em}.summary-value.failed{color:var(--red)}.summary-meta{display:block;margin-top:5px;font-size:11px;color:var(--faint)}.panel{background:var(--surface);border:1px solid var(--line);border-radius:9px;overflow:hidden}.panel-head{min-height:54px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line)}.panel-head h2{margin:0;font-size:13px;font-weight:650;letter-spacing:-.005em}.panel-head .muted{font-size:11px;color:var(--faint)}.section-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:16px;align-items:start}.section-stack{display:grid;gap:16px}.panel-body{padding:0}.queue-table,.jobs-table{width:100%;border-collapse:collapse;text-align:left}.queue-table th,.jobs-table th{height:34px;padding:0 14px;background:var(--surface-2);border-bottom:1px solid var(--line);color:var(--faint);font-size:10px;font-weight:650;text-transform:uppercase;letter-spacing:.055em;white-space:nowrap}.queue-table td,.jobs-table td{height:47px;padding:7px 14px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:middle}.queue-table tr:last-child td,.jobs-table tr:last-child td{border-bottom:0}.queue-name{font-weight:620;color:var(--text);text-decoration:none}.queue-name:hover{color:var(--accent)}.queue-counts{display:flex;gap:11px;color:var(--muted);font-variant-numeric:tabular-nums}.count-pair{display:inline-flex;align-items:center;gap:4px}.count-pair b{color:var(--text);font-weight:600}.small-action{border:0;background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;padding:5px 6px;border-radius:5px}.small-action:hover{background:var(--surface-2);color:var(--text)}.job-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--muted);white-space:nowrap}.job-link{border:0;background:none;padding:0;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font:inherit;font-size:12px;text-align:left;cursor:pointer}.job-link:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}.state{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border-radius:5px;padding:3px 7px;font-size:10px;font-weight:650}.state:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.state-waiting{background:var(--surface-2);color:var(--muted)}.state-delayed{background:var(--amber-soft);color:var(--amber)}.state-active{background:var(--blue-soft);color:var(--blue)}.state-completed{background:var(--accent-soft);color:var(--accent)}.state-failed{background:var(--red-soft);color:var(--red)}.state-cancelled{background:var(--surface-2);color:var(--faint)}.empty{padding:32px 18px;text-align:center;color:var(--muted);font-size:12px}.empty strong{display:block;margin-bottom:5px;color:var(--text);font-size:13px;font-weight:620}.empty p{margin:0;color:var(--faint)}.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line)}.search{position:relative;flex:1 1 220px;max-width:360px}.search svg{position:absolute;left:10px;top:9px;width:15px;height:15px;stroke:var(--faint);fill:none;stroke-width:1.8}.search input,.control{height:34px;width:100%;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);padding:0 10px;color:var(--text);font-size:12px}.search input{padding-left:32px}.search input::placeholder,.control::placeholder{color:var(--faint)}.filter{height:31px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--muted);padding:0 9px;font-size:11px;font-weight:600;cursor:pointer}.filter:hover{color:var(--text);background:var(--surface-2)}.filter[aria-pressed="true"]{color:var(--accent);background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 20%,var(--line))}.table-wrap{overflow:auto}.table-footer{height:43px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;color:var(--faint);font-size:11px;border-top:1px solid var(--line)}.inline-error{display:none;align-items:center;justify-content:space-between;gap:12px;padding:10px 13px;margin:0 0 14px;border:1px solid color-mix(in srgb,var(--red) 32%,var(--line));border-radius:7px;background:var(--red-soft);color:var(--red);font-size:12px}.inline-error[data-visible="true"]{display:flex}.toast{position:fixed;right:22px;bottom:20px;z-index:8;max-width:min(420px,calc(100vw - 32px));padding:11px 14px;border-radius:7px;background:#17231b;color:#f4fff7;box-shadow:var(--shadow);font-size:12px;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .18s,transform .18s}.toast[data-visible="true"]{opacity:1;transform:translateY(0)}dialog{border:1px solid var(--line-strong);border-radius:12px;padding:0;background:var(--surface);color:var(--text);box-shadow:var(--shadow);width:min(630px,calc(100vw - 24px));max-height:min(85vh,850px);overflow:auto}dialog::backdrop{background:rgba(11,20,15,.42);backdrop-filter:blur(2px)}.dialog-head{position:sticky;top:0;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:17px 18px 14px;background:var(--surface);border-bottom:1px solid var(--line)}.dialog-head h2{margin:0;font-size:14px;font-weight:650}.dialog-head p{margin:5px 0 0;color:var(--muted);font:11px ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all}.dialog-body{padding:17px 18px}.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:16px}.detail-cell{padding:10px;border-radius:6px;background:var(--surface-2)}.detail-cell span{display:block;color:var(--faint);font-size:10px;margin-bottom:4px}.detail-cell strong{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}.detail-label{margin:16px 0 7px;color:var(--muted);font-size:11px;font-weight:650}.code{max-height:280px;overflow:auto;margin:0;padding:12px;border-radius:7px;background:var(--surface-2);color:var(--text);font:11px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere}.error-code{color:var(--red)}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:17px}.form-grid{display:grid;gap:12px}.field label{display:block;margin-bottom:5px;color:var(--muted);font-size:11px;font-weight:620}.field .control{height:37px}.field textarea.control{height:148px;padding:9px 10px;resize:vertical;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}.field-hint{margin-top:4px;color:var(--faint);font-size:10px}.theme-toggle{display:flex;align-items:center;gap:7px}.refresh-state{min-width:95px;text-align:right;color:var(--faint);font-size:10px;font-variant-numeric:tabular-nums}.skeleton{height:15px;width:48px;border-radius:4px;background:linear-gradient(90deg,var(--surface-2),var(--line),var(--surface-2));background-size:200% 100%;animation:shimmer 1.3s ease-in-out infinite}@keyframes shimmer{to{background-position:-200% 0}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+    @media(max-width:980px){.section-grid{grid-template-columns:1fr}.sidebar{width:198px}.workspace{margin-left:198px}.main{padding:23px 22px 45px}.topbar{padding:0 22px}.queue-counts{gap:7px}}
+    @media(max-width:700px){.sidebar{position:sticky;top:0;inset:auto;width:auto;height:auto;padding:0 12px;background:var(--surface);border-right:0;border-bottom:1px solid var(--line)}.brand{height:52px;padding:0 2px 0;gap:9px}.brand-mark{width:28px;height:28px}.brand-caption{display:none}.nav-label,.side-bottom{display:none}.nav{display:flex;gap:3px;padding:0 0 8px;overflow:auto}.nav button{width:auto;height:34px;padding:0 10px;white-space:nowrap;font-size:11px}.nav svg{width:15px;height:15px}.workspace{margin-left:0;min-height:calc(100vh - 94px)}.topbar{height:46px;padding:0 14px}.crumb{font-size:11px}.main{padding:19px 14px 40px}.page-head{margin-bottom:18px}.page-head h1{font-size:20px}.page-head p{max-width:42ch;font-size:12px}.summary{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:15px}.summary-item{min-height:66px;padding:12px 13px;border-bottom:1px solid var(--line)}.summary-item:nth-child(2){border-right:0}.summary-item:nth-child(n+3){border-bottom:0}.summary-value{font-size:20px}.panel-head{padding:11px 13px}.table-wrap{margin:0}.queue-table th,.jobs-table th{padding:0 10px}.queue-table td,.jobs-table td{padding:7px 10px}.hide-mobile{display:none}.head-actions .quiet-button span{display:none}.head-actions .quiet-button{width:35px;padding:0}.detail-grid{grid-template-columns:repeat(2,1fr)}}
+    .live-dot.offline{background:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 15%,transparent)}.runtime-note{padding:14px 16px;color:var(--muted);font-size:12px;line-height:1.6}.worker-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;border-bottom:1px solid var(--line)}.worker-queue{min-width:0}.worker-queue-name{font-size:12px;font-weight:620;overflow:hidden;text-overflow:ellipsis}.worker-state{text-align:right;white-space:nowrap}.worker-active{font-size:12px;font-variant-numeric:tabular-nums}.worker-status{font-size:10px;color:var(--faint)}.advanced-options{margin-top:15px;border-top:1px solid var(--line);padding-top:12px}.advanced-options summary{color:var(--muted);font-size:12px;font-weight:620;cursor:pointer}.advanced-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}.token-dialog{width:min(430px,calc(100vw - 24px))}.token-hint{margin-top:5px;color:var(--faint);font-size:11px;line-height:1.5}.dialog-error{padding:9px 11px;margin-bottom:12px;border:1px solid color-mix(in srgb,var(--red) 32%,var(--line));border-radius:6px;background:var(--red-soft);color:var(--red);font-size:12px}.dialog-error[hidden]{display:none}@media(max-width:500px){.advanced-grid{grid-template-columns:1fr}}
+    [hidden]{display:none!important}.table-wrap{-webkit-overflow-scrolling:touch}
+    @media(max-width:700px){.refresh-state{display:none}.status-line{flex-wrap:wrap;row-gap:6px}.status-line>span[aria-hidden="true"]{display:none}}
+    .mobile-paused{display:none}
+    .mobile-add-job{display:none}
+    @media(max-width:700px){.overview-status,.overview-action{display:none}.mobile-paused{display:block;margin-top:2px;color:var(--amber);font-size:10px;font-weight:620}.queue-counts{gap:5px;font-size:11px}.queue-counts .count-pair{gap:3px}#add-job{display:none}.mobile-add-job{display:inline-flex;margin-top:12px;min-height:38px}}
+    .page-head h1{font-family:Georgia,"Times New Roman",serif;font-weight:700;letter-spacing:-.035em}.summary,.panel{border-radius:12px}.preview-banner{display:flex;align-items:center;gap:8px;padding:9px 12px;margin:0 0 14px;border:1px solid color-mix(in srgb,var(--accent) 28%,var(--line));border-radius:8px;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:650;letter-spacing:.01em}.preview-banner[hidden]{display:none}.mobile-runtime-copy{display:none}@media(max-width:700px){.brand{height:44px}.nav{padding-bottom:6px}.nav button{height:30px}.topbar{height:40px}.main{padding-top:14px}.page-head{margin-bottom:12px}.preview-banner{gap:6px;padding:6px 9px;margin-bottom:8px;font-size:10px}.desktop-runtime-copy{display:none}.mobile-runtime-copy{display:inline}.status-line{margin-bottom:10px}.summary{width:100%;min-width:0}.summary-item{min-width:0;min-height:60px;padding:10px}.summary-item>div{min-width:0;flex:1}.summary-value{flex-shrink:0;margin-left:auto}.panel-head{min-height:48px}.queue-table td,.jobs-table td{height:42px}.queue-overview-table tbody tr:nth-child(n+3){display:none}}
+    .health-degraded{color:var(--red)}.health-degraded .live-dot{background:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 15%,transparent)}.runtime-warning{margin:0 0 12px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--red) 32%,var(--line));border-radius:8px;background:var(--red-soft);color:var(--red);font-size:12px;line-height:1.5}.search-scope{padding:0 14px 10px;color:var(--faint);font-size:11px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:700px){body{font-size:16px}.page-head p{font-size:14px}.summary-label{font-size:13px}.summary-meta{font-size:12px}.queue-table td,.jobs-table td{font-size:14px}.queue-table th,.jobs-table th{font-size:11px}.panel-head h2{font-size:14px}.status-line{font-size:13px}.nav button,.filter,.small-action,.icon-button,.quiet-button,.primary-button,.danger-button{min-height:44px}.nav button{height:44px}.icon-button{width:44px;height:44px}.filter{height:44px;padding-inline:12px}.small-action{padding:8px;min-width:44px}.search input,.control,.field .control{height:44px;font-size:16px}.search svg{top:14px}.field textarea.control{height:180px;font-size:16px}.mobile-add-job{min-height:44px}.status-line{align-items:flex-start}.runtime-warning{font-size:14px}.table-footer{height:auto;min-height:48px;gap:8px;flex-wrap:wrap;padding-block:8px}}
+    .code{direction:ltr;unicode-bidi:plaintext}.live-dot.offline{background:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 15%,transparent)}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition-duration:0s!important}}
+  </style>
+</head>
+<body>
+  <!--
+  THESIS: Put queue health and the next operator action on one screen instead of making users reconstruct them from logs.
+  OWN-WORLD: Cool neutral surfaces, compact data tables, broccoli green for live and successful work, and a restrained serif page title.
+  STORY: Operators read queue health, find a job, inspect its payload, then retry or cancel with clear state feedback.
+  FIRST VIEWPORT: Four state totals sit above queues and recent jobs; worker capacity and the one-process boundary stay beside them. Add job remains one tap away on phones.
+  FORM: Familiar queue-operations overview, surface seed 55a8b15b (operate); the user's brief calls for established queue-dashboard patterns.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+  -->
+  <div class="shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 19.5v-6.2m0 1.6c-3.1 0-5.2-1.8-5.2-4.3 2.6 0 4.5 1.1 5.2 3.2m0-.6c0-3.1 1.9-5.2 4.8-5.2 0 2.8-1.7 4.7-4.8 5.2m-.1-4.8c-1.9-1.8-2-4.1-.6-6 2.2 1.3 3 3.3 2.2 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span>BroccoliQueue <span class="brand-caption">LOCAL OPERATIONS</span></span>
+      </div>
+      <div class="nav-label">Workspace</div>
+      <nav class="nav">
+        <button type="button" data-page="overview" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3.5 12h7v8h-7zM13.5 4h7v7h-7zM13.5 14h7v6h-7zM3.5 4h7v6h-7z"/></svg>Overview</button>
+        <button type="button" data-page="jobs"><svg viewBox="0 0 24 24"><path d="M7 4.5h10a2 2 0 0 1 2 2v13H5v-13a2 2 0 0 1 2-2zM8.5 9h7M8.5 12.5h7M8.5 16h4"/><path d="M9 4.5v-1h6v1"/></svg>Jobs</button>
+        <button type="button" data-page="queues"><svg viewBox="0 0 24 24"><path d="M4 5.5h16M4 12h16M4 18.5h16"/><circle cx="7" cy="5.5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="17" cy="18.5" r="1"/></svg>Queues</button>
+      </nav>
+      <div class="side-bottom"><div class="runtime-row"><span class="live-dot" id="runtime-dot"></span><span id="runtime-label">Connecting to runtime</span></div><div class="runtime-sub">BroccoliDB · embedded<br><span id="worker-count">No workers registered</span></div></div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar"><div class="crumb"><span>BroccoliQueue</span><span aria-hidden="true">/</span><strong id="breadcrumb">Overview</strong></div><div class="top-actions"><span class="refresh-state" id="refresh-state" aria-live="polite">Loading…</span><button class="icon-button" type="button" id="refresh" aria-label="Refresh data" title="Refresh data"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4.5 17a8 8 0 0 0 13.7 1.7L20 16M4 12V7h5M19.5 7A8 8 0 0 0 5.8 5.3L4 8"/></svg></button><button class="icon-button" type="button" id="theme-toggle" aria-label="Toggle dark theme" aria-pressed="false" title="Toggle dark theme"><svg viewBox="0 0 24 24"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4m0-12.8L17 7M7 17l-1.4 1.4"/><circle cx="12" cy="12" r="4"/></svg></button></div></header>
+      <main class="main" id="main" tabindex="-1">
+        <div class="preview-banner" id="preview-banner" role="note" hidden><span class="live-dot" aria-hidden="true"></span><span>Synthetic preview data · seed 55a8b15b</span></div>
+        <div class="inline-error" id="error-banner" role="alert"><span id="error-message"></span><button class="small-action" type="button" id="retry-load">Try again</button></div>
+        <section class="page-head"><div><h1 id="page-title">Queue overview</h1><p id="page-subtitle">Work accepted by this BroccoliDB runtime.</p><button class="primary-button mobile-add-job" type="button" id="mobile-add-job" aria-label="Add job"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add job</span></button></div><div class="head-actions"><button class="quiet-button" type="button" id="token-button" hidden><span>Set access token</span></button><button class="primary-button" type="button" id="add-job" aria-label="Add job" title="Add job"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add job</span></button></div></section>
+        <div id="view"></div>
+      </main>
+    </div>
+  </div>
+  <dialog id="job-dialog" aria-labelledby="job-dialog-title"><div class="dialog-head"><div><h2 id="job-dialog-title">Job details</h2><p id="job-dialog-id"></p></div><button class="icon-button" type="button" data-close="job-dialog" aria-label="Close job details">×</button></div><div class="dialog-body" id="job-dialog-body"></div></dialog>
+    <dialog id="add-dialog" aria-labelledby="add-dialog-title"><form id="add-form"><div class="dialog-head"><div><h2 id="add-dialog-title">Add a job</h2><p>Enqueue a JSON payload on this BroccoliDB runtime.</p></div><button class="icon-button" type="button" data-close="add-dialog" aria-label="Close add job">×</button></div><div class="dialog-body"><div class="form-grid"><div class="field"><label for="queue-name">Queue name</label><input class="control" id="queue-name" name="queueName" required maxlength="128" pattern="[A-Za-z0-9_./:-]+" aria-describedby="queue-name-hint" placeholder="emails.send" list="queue-options"><div class="field-hint" id="queue-name-hint">Use letters, numbers, _, ., /, :, or -. Up to 128 characters.</div><datalist id="queue-options"></datalist></div><div class="field"><label for="job-data">Job data</label><textarea class="control" id="job-data" name="data" required spellcheck="false" aria-describedby="job-data-hint">{}</textarea><div class="field-hint" id="job-data-hint">Must be valid JSON, up to 1 MiB. Sensitive values are stored in the local BroccoliDB WAL.</div></div></div><div class="dialog-error" data-dialog-error role="alert" hidden></div><details class="advanced-options"><summary>Advanced job options</summary><div class="advanced-grid"><div class="field"><label for="job-priority">Priority</label><input class="control" id="job-priority" type="number" step="1" min="-2147483648" max="2147483647" placeholder="Use queue default"></div><div class="field"><label for="job-delay">Delay (milliseconds)</label><input class="control" id="job-delay" type="number" step="1" min="0" placeholder="Run as soon as possible"></div><div class="field"><label for="job-attempts">Maximum attempts</label><input class="control" id="job-attempts" type="number" step="1" min="1" max="1000" placeholder="Use queue default"></div><div class="field"><label for="job-key">Idempotency key</label><input class="control" id="job-key" maxlength="256" placeholder="Optional stable key"></div></div></details><div class="dialog-actions"><button class="quiet-button" type="button" data-close="add-dialog">Cancel</button><button class="primary-button" type="submit" id="submit-job">Add job</button></div></div></form></dialog>
+  <dialog id="token-dialog" class="token-dialog" aria-labelledby="token-dialog-title"><form id="token-form"><div class="dialog-head"><div><h2 id="token-dialog-title">Connect to this dashboard</h2><p>Enter the access token configured by the queue host.</p></div><button class="icon-button" type="button" id="cancel-token" aria-label="Cancel token entry">×</button></div><div class="dialog-body"><div class="field"><label for="access-token">Access token</label><input class="control" id="access-token" type="password" autocomplete="current-password" required></div><div class="token-hint">The token stays in this browser tab and is sent only to this queue.</div><div class="dialog-actions"><button class="quiet-button" type="button" data-close="token-dialog">Cancel</button><button class="primary-button" type="submit">Connect</button></div></div></form></dialog>
+      <dialog id="queue-create-dialog" class="token-dialog" aria-labelledby="queue-create-title"><form id="queue-create-form"><div class="dialog-head"><div><h2 id="queue-create-title">Create a queue</h2><p>Choose a stable name for this kind of work.</p></div><button class="icon-button" type="button" data-close="queue-create-dialog" aria-label="Close create queue">×</button></div><div class="dialog-body"><div class="field"><label for="new-queue-name">Queue name</label><input class="control" id="new-queue-name" required maxlength="128" pattern="[A-Za-z0-9_./:-]+" aria-describedby="queue-create-hint" placeholder="reports.generate" autocomplete="off"><div class="field-hint" id="queue-create-hint">Use letters, numbers, _, ., /, :, or -. Up to 128 characters.</div></div><div class="dialog-error" data-dialog-error role="alert" hidden></div><div class="dialog-actions"><button class="quiet-button" type="button" data-close="queue-create-dialog">Cancel</button><button class="primary-button" type="submit" id="create-queue-submit">Create queue</button></div></div></form></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    (() => {
+      const $ = (selector, root = document) => root.querySelector(selector);
+      const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+      if (new URLSearchParams(window.location.search).get('preview') === 'synthetic') $('#preview-banner').hidden = false;
+      const state = { page: 'overview', overview: null, jobs: [], hasMoreJobs: false, loadingMore: false, selectedQueue: '', filter: '', search: '', queueSearch: '', lastUpdated: 0 };
+      const names = { overview: 'Overview', jobs: 'Jobs', queues: 'Queues' };
+      let toastTimer;
+      let loadInProgress = false;
+      let refreshQueued = false;
+      let tokenRequest;
+      let resolveTokenRequest;
+      let submittedToken;
+      const memoryStorage = new Map();
+
+      const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+      const number = value => Number(value || 0).toLocaleString();
+      const time = value => {
+        if (value === undefined || value === null) return '—';
+        const date = new Date(value);
+        if (!Number.isFinite(date.getTime())) return 'Invalid date';
+        try { return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date); }
+        catch { return date.toISOString(); }
+      };
+      const ago = value => {
+        if (!value) return '—';
+        const seconds = Math.max(0, Math.floor((Date.now() - value) / 1000));
+        if (seconds < 60) return `${seconds}s ago`;
+        if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+        return `${Math.floor(seconds / 86400)}d ago`;
+      };
+      const stateBadge = value => `<span class="state state-${escapeHtml(value)}">${escapeHtml(value)}</span>`;
+
+      function storageGet(storageName, key) {
+        try { return window[storageName].getItem(key); }
+        catch { return memoryStorage.get(`${storageName}:${key}`) || null; }
+      }
+
+      function storageSet(storageName, key, value) {
+        memoryStorage.set(`${storageName}:${key}`, value);
+        try { window[storageName].setItem(key, value); } catch {}
+      }
+
+      function storageRemove(storageName, key) {
+        memoryStorage.delete(`${storageName}:${key}`);
+        try { window[storageName].removeItem(key); } catch {}
+      }
+
+      function requestAccessToken() {
+        if (tokenRequest) return tokenRequest;
+        tokenRequest = new Promise(resolve => { resolveTokenRequest = resolve; });
+        submittedToken = null;
+        $('#access-token').value = '';
+        $('#token-dialog').showModal();
+        $('#access-token').focus();
+        return tokenRequest;
+      }
+
+      async function api(path, options = {}, retry = true) {
+        const token = storageGet('sessionStorage', 'broccoliQueueToken') || '';
+        const headers = { ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) };
+        let response;
+        try {
+          response = await fetch(path, { ...options, headers, cache: 'no-store', signal: options.signal || AbortSignal.timeout(12000) });
+        } catch (error) {
+          if (error instanceof DOMException && error.name === 'TimeoutError') throw new Error('Dashboard request timed out. Check the queue process, then try again.');
+          throw new Error('Could not reach the queue dashboard. Check the process and connection, then try again.');
+        }
+        if (response.status === 401 && retry) {
+          const value = await requestAccessToken();
+          if (value) return api(path, options, false);
+        }
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
+        return body;
+      }
+
+      function showToast(message) {
+        const node = $('#toast');
+        node.textContent = message;
+        node.dataset.visible = 'true';
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { node.dataset.visible = 'false'; }, 2800);
+      }
+
+      function setError(error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const localError = document.querySelector('dialog[open] [data-dialog-error]');
+        if (localError) {
+          localError.textContent = message;
+          localError.hidden = false;
+        } else {
+          $('#error-message').textContent = message;
+          $('#error-banner').dataset.visible = 'true';
+        }
+      }
+
+      function clearError() { $('#error-banner').dataset.visible = 'false'; }
+
+      async function refreshData() {
+        if (loadInProgress || state.loadingMore) { refreshQueued = true; return; }
+        loadInProgress = true;
+        $('#refresh').disabled = true;
+        try {
+          const olderJobs = state.page === 'jobs' ? state.jobs.slice(100) : [];
+          const [overview, jobs] = await Promise.all([
+            api('/api/overview'),
+            api('/api/jobs?limit=100')
+          ]);
+          state.overview = overview;
+          const newestIds = new Set(jobs.jobs.map(job => job.id));
+          state.jobs = [...jobs.jobs, ...olderJobs.filter(job => !newestIds.has(job.id))].slice(0, 12_000);
+          state.hasMoreJobs = state.jobs.length < 12_000 && (olderJobs.length > 0 || jobs.jobs.length === 100);
+          state.lastUpdated = Date.now();
+          const storageDegraded = overview.health?.status === 'degraded';
+          $('#runtime-label').textContent = storageDegraded ? 'Storage write issue' : 'Runtime connected';
+          $('#runtime-dot').classList.toggle('offline', storageDegraded);
+          $('#worker-count').textContent = `${number(overview.workers.length)} worker${overview.workers.length === 1 ? '' : 's'} registered`;
+          $('#refresh-state').textContent = `Updated ${new Date(state.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+          $('#token-button').hidden = true;
+          clearError();
+          render();
+        } catch (error) {
+          $('#runtime-label').textContent = 'Runtime unavailable';
+          $('#runtime-dot').classList.add('offline');
+          $('#refresh-state').textContent = 'Refresh failed';
+          if (!state.overview) showLoadingError();
+          setError(error);
+          if (error instanceof Error && error.message.includes('Dashboard token')) $('#token-button').hidden = false;
+        } finally {
+          loadInProgress = false;
+          $('#refresh').disabled = false;
+          if (refreshQueued && !state.loadingMore) {
+            refreshQueued = false;
+            setTimeout(() => { void refreshData(); }, 0);
+          }
+        }
+      }
+
+      function showLoadingError() {
+        $('#view').innerHTML = `<section class="panel"><div class="empty"><strong>Can't reach this queue yet</strong><p>Check that the BroccoliQueue process is running, then refresh.</p></div></section>`;
+      }
+
+      function renderSummary(counts) {
+        const cells = [
+          ['Waiting', counts.waiting, `${number(counts.delayed)} delayed`],
+          ['Active', counts.active, 'currently leased'],
+          ['Failed', counts.failed, 'needs review'],
+          ['Completed', counts.completed, 'retained jobs']
+        ];
+        return `<section class="summary" aria-label="Job counts">${cells.map(([label, value, hint]) => `<div class="summary-item"><div><div class="summary-label">${label}</div><span class="summary-meta">${hint}</span></div><strong class="summary-value ${label === 'Failed' && value ? 'failed' : ''}">${number(value)}</strong></div>`).join('')}</section>`;
+      }
+
+      function queueRows(queues) {
+        if (!queues.length) return `<tr><td colspan="4"><div class="empty"><strong>No queues yet</strong><p>Add a job to create its queue, or create one from the Queues page.</p></div></td></tr>`;
+        return queues.map(queue => {
+          const status = queue.paused ? 'paused' : 'running';
+          return `<tr><td><button type="button" class="job-link queue-link" data-queue="${escapeHtml(queue.name)}" aria-label="${escapeHtml(queue.name)}, ${status}">${escapeHtml(queue.name)}</button>${queue.paused ? '<span class="mobile-paused">Paused</span>' : ''}</td><td><div class="queue-counts"><span class="count-pair"><b>${number(queue.counts.waiting)}</b> ready</span><span class="count-pair"><b>${number(queue.counts.active)}</b> active</span><span class="count-pair"><b>${number(queue.counts.failed)}</b> failed</span></div></td><td class="overview-status">${queue.paused ? '<span class="state state-delayed">paused</span>' : '<span class="state state-completed">running</span>'}</td><td class="overview-action"><button class="small-action" data-queue-action="${queue.paused ? 'resume' : 'pause'}" data-queue="${escapeHtml(queue.name)}">${queue.paused ? 'Resume' : 'Pause'}</button></td></tr>`;
+        }).join('');
+      }
+
+      function jobRows(jobs, emptyTitle = 'No jobs match this view', emptyDescription = 'Change the state filter or add a job to get started.') {
+        if (!jobs.length) return `<tr><td colspan="5"><div class="empty"><strong>${escapeHtml(emptyTitle)}</strong><p>${escapeHtml(emptyDescription)}</p></div></td></tr>`;
+        return jobs.map(job => `<tr><td><button type="button" class="job-link" data-job="${escapeHtml(job.id)}">${escapeHtml(job.queueName)}</button><div class="job-id">${escapeHtml(job.id.slice(0, 15))}</div></td><td>${stateBadge(job.state)}</td><td class="hide-mobile">${number(job.attemptsMade)} / ${number(job.maxAttempts)}</td><td class="hide-mobile">${ago(job.createdAt)}</td><td><button type="button" class="small-action" data-job="${escapeHtml(job.id)}" aria-label="Inspect job ${escapeHtml(job.id)}">Inspect</button></td></tr>`).join('');
+      }
+
+      function panel(title, body, hint = '') {
+        return `<section class="panel"><div class="panel-head"><h2>${title}</h2>${hint ? `<span class="muted">${hint}</span>` : ''}</div>${body}</section>`;
+      }
+
+      function renderOverview() {
+        const overview = state.overview;
+        const degraded = overview.health?.status === 'degraded';
+        const queueBody = `<div class="table-wrap"><table class="queue-table queue-overview-table"><thead><tr><th>Queue</th><th>Jobs</th><th class="overview-status">Status</th><th class="overview-action"></th></tr></thead><tbody>${queueRows(overview.queues.slice(0, 8))}</tbody></table></div>`;
+        const recent = [...state.jobs].sort((a, b) => b.createdAt - a.createdAt).slice(0, 8);
+        const jobBody = `<div class="table-wrap"><table class="jobs-table"><thead><tr><th>Queue / job</th><th>Status</th><th class="hide-mobile">Attempts</th><th class="hide-mobile">Created</th><th></th></tr></thead><tbody>${jobRows(recent)}</tbody></table></div>`;
+        const statusLine = degraded
+          ? `<div class="status-line health-degraded"><span class="live-dot" aria-hidden="true"></span><span>Storage is degraded. New handlers stay paused until a BroccoliDB WAL flush succeeds.</span></div>`
+          : `<div class="status-line"><span class="live-dot" aria-hidden="true"></span><span class="desktop-runtime-copy">Connected to one BroccoliDB process.</span><span class="mobile-runtime-copy">One BroccoliDB process · local workers.</span><span aria-hidden="true">·</span><span class="desktop-runtime-copy">Workers run in the same Node.js runtime.</span></div>`;
+        $('#view').innerHTML = `${statusLine}${renderSummary(overview.totals)}<div class="section-grid"><div class="section-stack">${panel('Queues', queueBody, `${number(overview.queues.length)} total`)}${panel('Recent jobs', jobBody, 'Newest first')}</div><div class="section-stack">${panel('Workers', renderWorkers(overview.workers), `${number(overview.workers.length)} registered`)}${panel('Runtime boundary', `<div class="panel-body"><div class="runtime-note">This queue shares one BroccoliDB kernel in one process. Producers and workers in this runtime share indexed tables and the local WAL. A second process must not open the same BroccoliDB workspace.</div></div>`)}</div></div>`;
+        bindRows();
+      }
+
+      function renderWorkers(workers) {
+        if (!workers.length) return `<div class="empty"><strong>Waiting for a worker</strong><p>Register a processor in your Node.js application to start draining jobs.</p></div>`;
+        return `<div class="panel-body">${workers.map(worker => `<div class="worker-row"><div class="worker-queue"><div class="worker-queue-name">${escapeHtml(worker.queueName)}</div><div class="job-id">${escapeHtml(worker.id)}</div></div><div class="worker-state"><strong class="worker-active">${number(worker.activeCount)} / ${number(worker.concurrency)}</strong><div class="worker-status">${worker.isRunning ? 'running' : 'stopped'}</div></div></div>`).join('')}</div>`;
+      }
+
+      function renderJobs() {
+        const filters = ['all', 'waiting', 'delayed', 'active', 'failed', 'completed', 'cancelled'];
+        let jobs = [...state.jobs];
+        if (state.filter && state.filter !== 'all') jobs = jobs.filter(job => job.state === state.filter);
+        if (state.selectedQueue) jobs = jobs.filter(job => job.queueName === state.selectedQueue);
+        if (state.search) jobs = jobs.filter(job => job.id.toLowerCase().includes(state.search.toLowerCase()) || job.queueName.toLowerCase().includes(state.search.toLowerCase()));
+        const hasNarrowing = Boolean(state.search || (state.filter && state.filter !== 'all') || state.selectedQueue);
+        const emptyTitle = hasNarrowing ? 'No loaded jobs match these filters' : 'No jobs yet';
+        const emptyDescription = hasNarrowing ? 'Load older jobs or clear a filter to widen the search.' : 'Add a job to create your first queue entry.';
+        const moreButton = state.hasMoreJobs ? `<button type="button" class="small-action" id="load-more-jobs" ${state.loadingMore ? 'disabled' : ''}>${state.loadingMore ? 'Loading…' : 'Load older jobs'}</button>` : '';
+        const body = `<div class="toolbar"><label class="search"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m16 16 4.5 4.5"/></svg><input id="job-search" type="search" placeholder="Search loaded jobs" value="${escapeHtml(state.search)}" aria-label="Search loaded queue names or job IDs" aria-describedby="job-search-help"></label><div class="filters" role="group" aria-label="Filter by job state">${filters.map(filter => `<button type="button" class="filter" data-filter="${filter}" aria-pressed="${(state.filter || 'all') === filter}">${filter === 'all' ? 'All jobs' : filter[0].toUpperCase() + filter.slice(1)}</button>`).join('')}</div></div><div class="search-scope" id="job-search-help">Search checks the jobs currently loaded. Load older jobs to expand the range.</div><div class="table-wrap"><table class="jobs-table"><thead><tr><th>Queue / job</th><th>Status</th><th>Attempts</th><th class="hide-mobile">Created</th><th></th></tr></thead><tbody>${jobRows(jobs, emptyTitle, emptyDescription)}</tbody></table></div><div class="table-footer"><span>${number(jobs.length)} matching · ${number(state.jobs.length)} recent jobs loaded</span><span>${moreButton} Refreshes every 5 seconds</span></div>`;
+        $('#view').innerHTML = panel(state.selectedQueue ? `Jobs · ${escapeHtml(state.selectedQueue)}` : 'Jobs', body, `${number(state.jobs.length)} loaded`);
+        $('#job-search').addEventListener('input', event => { state.search = event.target.value; renderJobs(); const input = $('#job-search'); input.focus(); input.setSelectionRange(input.value.length, input.value.length); });
+        $$('.filter').forEach(button => button.addEventListener('click', () => { state.filter = button.dataset.filter; renderJobs(); }));
+        $('#load-more-jobs')?.addEventListener('click', () => { void loadMoreJobs(); });
+        bindRows();
+      }
+
+      async function loadMoreJobs() {
+        if (!state.hasMoreJobs || state.loadingMore) return;
+        const beforeId = state.jobs.at(-1)?.id;
+        if (!beforeId) { state.hasMoreJobs = false; renderJobs(); return; }
+        state.loadingMore = true;
+        renderJobs();
+        try {
+          const page = await api(`/api/jobs?limit=100&before=${encodeURIComponent(beforeId)}`);
+          const known = new Set(state.jobs.map(job => job.id));
+          state.jobs.push(...page.jobs.filter(job => !known.has(job.id)));
+          state.jobs = state.jobs.slice(0, 12_000);
+          state.hasMoreJobs = page.jobs.length === 100 && state.jobs.length < 12_000;
+        } catch (error) { setError(error); }
+        finally {
+          state.loadingMore = false;
+          renderJobs();
+          if (refreshQueued) { refreshQueued = false; setTimeout(() => { void refreshData(); }, 0); }
+        }
+      }
+
+      function applyQueueSearch() {
+        const value = state.queueSearch.toLowerCase();
+        const rows = $$('[data-queue-row]');
+        let visible = 0;
+        rows.forEach(row => {
+          row.hidden = !row.dataset.queueRow.toLowerCase().includes(value);
+          if (!row.hidden) visible++;
+        });
+        const noMatches = $('#queue-search-empty');
+        if (noMatches) noMatches.hidden = !value || rows.length === 0 || visible > 0;
+      }
+
+      function renderQueues() {
+        const queues = state.overview.queues;
+        const emptyState = queues.length ? '' : '<tr><td colspan="7"><div class="empty"><strong>No queues created</strong><p>Add your first job or create a named queue.</p></div></td></tr>';
+        const rows = queues.map(queue => `<tr data-queue-row="${escapeHtml(queue.name)}"><td><button type="button" class="job-link queue-link" data-queue="${escapeHtml(queue.name)}">${escapeHtml(queue.name)}</button></td><td>${number(queue.counts.waiting + queue.counts.delayed)}</td><td>${number(queue.counts.active)}</td><td>${number(queue.counts.failed)}</td><td>${number(queue.counts.completed)}</td><td>${queue.paused ? '<span class="state state-delayed">paused</span>' : '<span class="state state-completed">running</span>'}</td><td><button class="small-action" data-queue-action="${queue.paused ? 'resume' : 'pause'}" data-queue="${escapeHtml(queue.name)}">${queue.paused ? 'Resume' : 'Pause'}</button></td></tr>`).join('');
+        const body = `<div class="toolbar"><label class="search"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m16 16 4.5 4.5"/></svg><input id="queue-search" type="search" placeholder="Search queues" aria-label="Search queues" value="${escapeHtml(state.queueSearch)}"></label><button class="quiet-button" type="button" id="create-queue">Create queue</button></div><div class="table-wrap"><table class="queue-table"><thead><tr><th>Queue</th><th>Waiting</th><th>Active</th><th>Failed</th><th>Completed</th><th>Status</th><th></th></tr></thead><tbody>${emptyState}${rows}<tr id="queue-search-empty" hidden><td colspan="7"><div class="empty"><strong>No queues match your search</strong><p>Try another queue name.</p></div></td></tr></tbody></table></div><div class="table-footer"><span>${number(queues.length)} queue${queues.length === 1 ? '' : 's'}</span><span>Pausing stops new claims; active handlers finish normally.</span></div>`;
+        $('#view').innerHTML = panel('Queues', body, 'BroccoliDB tables');
+        applyQueueSearch();
+        $('#queue-search').addEventListener('input', event => {
+          state.queueSearch = event.target.value;
+          applyQueueSearch();
+        });
+        $('#create-queue').addEventListener('click', () => {
+          $('#new-queue-name').value = '';
+          $('[data-dialog-error]', $('#queue-create-dialog')).hidden = true;
+          $('#queue-create-dialog').showModal();
+          $('#new-queue-name').focus();
+        });
+        bindRows();
+      }
+
+      function render() {
+        if (!state.overview) return;
+        const focusedId = document.activeElement instanceof HTMLInputElement && ['job-search', 'queue-search'].includes(document.activeElement.id)
+          ? document.activeElement.id
+          : '';
+        const selectionStart = focusedId ? document.activeElement.selectionStart : null;
+        const selectionEnd = focusedId ? document.activeElement.selectionEnd : null;
+        $('#page-title').textContent = state.page === 'overview' ? 'Queue overview' : names[state.page];
+        $('#page-subtitle').textContent = state.page === 'overview'
+          ? 'Work accepted by this BroccoliDB runtime.'
+          : state.page === 'jobs' ? 'Inspect, retry, and cancel retained jobs.' : 'Pause or resume work without stopping active handlers.';
+        $('#breadcrumb').textContent = names[state.page];
+        $$('.nav button').forEach(button => {
+          if (button.dataset.page === state.page) button.setAttribute('aria-current', 'page');
+          else button.removeAttribute('aria-current');
+        });
+        if (state.page === 'overview') renderOverview();
+        else if (state.page === 'jobs') renderJobs();
+        else renderQueues();
+        const list = state.overview.queues;
+        $('#queue-options').innerHTML = list.map(queue => `<option value="${escapeHtml(queue.name)}"></option>`).join('');
+        if (focusedId && $("#" + focusedId)) {
+          const input = $("#" + focusedId);
+          input.focus({ preventScroll: true });
+          if (selectionStart !== null) input.setSelectionRange(selectionStart, selectionEnd);
+        }
+      }
+
+      function bindRows() {
+        $$('[data-job]').forEach(button => button.addEventListener('click', () => openJob(button.dataset.job)));
+        $$('.queue-link').forEach(button => button.addEventListener('click', () => { state.page = 'jobs'; state.selectedQueue = button.dataset.queue; state.filter = ''; render(); $('#main').focus(); }));
+        $$('[data-queue-action]').forEach(button => button.addEventListener('click', async () => {
+          button.disabled = true;
+          try {
+            const action = button.dataset.queueAction;
+            await api(`/api/queues/${encodeURIComponent(button.dataset.queue)}/${action}`, { method: 'POST' });
+            showToast(`Queue ${action === 'pause' ? 'paused' : 'resumed'}`);
+            await refreshData();
+          } catch (error) { setError(error); button.disabled = false; }
+        }));
+      }
+
+      async function openJob(id) {
+        try {
+          const { job } = await api(`/api/jobs/${encodeURIComponent(id)}`);
+          $('#job-dialog-id').textContent = job.id;
+          $('#job-dialog-body').innerHTML = `<div class="dialog-error" data-dialog-error role="alert" hidden></div><div class="detail-grid"><div class="detail-cell"><span>Queue</span><strong>${escapeHtml(job.queueName)}</strong></div><div class="detail-cell"><span>State</span><strong>${stateBadge(job.state)}</strong></div><div class="detail-cell"><span>Attempts</span><strong>${number(job.attemptsMade)} / ${number(job.maxAttempts)}</strong></div><div class="detail-cell"><span>Priority</span><strong>${number(job.priority)}</strong></div><div class="detail-cell"><span>Available</span><strong>${escapeHtml(time(job.availableAt))}</strong></div><div class="detail-cell"><span>Worker</span><strong>${escapeHtml(job.workerId || '—')}</strong></div><div class="detail-cell"><span>Lease expires</span><strong>${escapeHtml(time(job.leaseExpiresAt))}</strong></div><div class="detail-cell"><span>Created</span><strong>${escapeHtml(time(job.createdAt))}</strong></div><div class="detail-cell"><span>Processed</span><strong>${escapeHtml(time(job.processedAt))}</strong></div><div class="detail-cell"><span>Finished</span><strong>${escapeHtml(time(job.finishedAt))}</strong></div></div>${job.idempotencyKey ? `<div class="detail-label">Idempotency key</div><pre class="code">${escapeHtml(job.idempotencyKey)}</pre>` : ''}<div class="detail-label">Payload</div><pre class="code">${escapeHtml(JSON.stringify(job.data, null, 2))}</pre>${job.returnValue !== undefined ? `<div class="detail-label">Result</div><pre class="code">${escapeHtml(JSON.stringify(job.returnValue, null, 2))}</pre>` : ''}${job.lastError ? `<div class="detail-label">Last error</div><pre class="code error-code">${escapeHtml(`${job.lastError.name}: ${job.lastError.message}${job.lastError.stack ? `\n\n${job.lastError.stack}` : ''}`)}</pre>` : ''}<div class="dialog-actions">${job.state === 'failed' ? '<button class="quiet-button" type="button" id="retry-job">Retry job</button>' : ''}${['waiting', 'delayed', 'active'].includes(job.state) ? '<button class="danger-button" type="button" id="cancel-job">Cancel job</button>' : ''}<button class="quiet-button" type="button" data-close="job-dialog">Close</button></div>`;
+          $('#job-dialog').showModal();
+          $('#retry-job')?.addEventListener('click', async event => {
+            const button = event.currentTarget;
+            button.disabled = true;
+            button.textContent = 'Retrying…';
+            try { const result = await api(`/api/jobs/${encodeURIComponent(job.id)}/retry`, { method: 'POST', body: '{}' }); showToast(result.retried ? 'Job moved back to the queue' : 'Job could not be retried'); $('#job-dialog').close(); await refreshData(); }
+            catch (error) { setError(error); button.disabled = false; button.textContent = 'Retry job'; }
+          });
+          $('#cancel-job')?.addEventListener('click', async event => {
+            if (!window.confirm('Cancel this job? An active handler receives an abort signal.')) return;
+            const button = event.currentTarget;
+            button.disabled = true;
+            button.textContent = 'Cancelling…';
+            try { await api(`/api/jobs/${encodeURIComponent(job.id)}/cancel`, { method: 'POST', body: '{}' }); showToast('Job cancelled'); $('#job-dialog').close(); await refreshData(); }
+            catch (error) { setError(error); button.disabled = false; button.textContent = 'Cancel job'; }
+          });
+          $$('[data-close="job-dialog"]').forEach(button => button.addEventListener('click', () => $('#job-dialog').close()));
+        } catch (error) { setError(error); }
+      }
+
+      $$('.nav button').forEach(button => button.addEventListener('click', () => {
+        state.page = button.dataset.page;
+        if (state.page !== 'jobs') state.selectedQueue = '';
+        render();
+        $('#main').focus();
+      }));
+      $('#refresh').addEventListener('click', () => { void refreshData(); });
+      $('#retry-load').addEventListener('click', () => { void refreshData(); });
+      $('#token-button').addEventListener('click', () => {
+        storageRemove('sessionStorage', 'broccoliQueueToken');
+        void requestAccessToken().then(value => { if (value) void refreshData(); });
+      });
+      $('#theme-toggle').addEventListener('click', () => {
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        $('#theme-toggle').setAttribute('aria-pressed', String(next === 'dark'));
+        $('#theme-toggle').setAttribute('aria-label', next === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+        storageSet('localStorage', 'broccoliQueueTheme', next);
+      });
+      $('#add-job').addEventListener('click', () => $('#add-dialog').showModal());
+      $('#mobile-add-job').addEventListener('click', () => $('#add-dialog').showModal());
+      $$('[data-close="add-dialog"]').forEach(button => button.addEventListener('click', () => $('#add-dialog').close()));
+      $$('[data-close="token-dialog"]').forEach(button => button.addEventListener('click', () => $('#token-dialog').close()));
+      $('#token-form').addEventListener('submit', event => {
+        event.preventDefault();
+        submittedToken = $('#access-token').value.trim();
+        if (!submittedToken) return;
+        storageSet('sessionStorage', 'broccoliQueueToken', submittedToken);
+        $('#token-dialog').close();
+      });
+      $('#cancel-token').addEventListener('click', () => $('#token-dialog').close());
+      $('#token-dialog').addEventListener('close', () => {
+        resolveTokenRequest?.(submittedToken);
+        resolveTokenRequest = undefined;
+        tokenRequest = undefined;
+        submittedToken = null;
+        $('#access-token').value = '';
+      });
+      $('#add-form').addEventListener('submit', async event => {
+        event.preventDefault();
+        const button = $('#submit-job');
+        $('[data-dialog-error]', $('#add-dialog')).hidden = true;
+        button.disabled = true;
+        try {
+          const queueName = $('#queue-name').value.trim();
+          let data;
+          try { data = JSON.parse($('#job-data').value); }
+          catch { throw new Error('Job data must be valid JSON. Check commas, quotes, and brackets.'); }
+          const options = {};
+          for (const [id, key] of [['job-priority', 'priority'], ['job-delay', 'delayMs'], ['job-attempts', 'attempts']]) {
+            const value = $(`#${id}`).value.trim();
+            if (value !== '') options[key] = Number(value);
+          }
+          const idempotencyKey = $('#job-key').value.trim();
+          if (idempotencyKey) options.idempotencyKey = idempotencyKey;
+          const result = await api('/api/jobs', { method: 'POST', body: JSON.stringify({ queueName, data, options }) });
+          $('#add-dialog').close();
+          $('#add-form').reset();
+          $('#job-data').value = '{}';
+          $('.advanced-options').open = false;
+          showToast(`Job added · ${result.job.id.slice(0, 12)}`);
+          state.page = 'jobs';
+          await refreshData();
+        } catch (error) { setError(error); }
+        finally { button.disabled = false; }
+      });
+      $('#job-dialog').addEventListener('click', event => { if (event.target === $('#job-dialog')) $('#job-dialog').close(); });
+      $('#add-dialog').addEventListener('click', event => { if (event.target === $('#add-dialog')) $('#add-dialog').close(); });
+      $('#token-dialog').addEventListener('click', event => { if (event.target === $('#token-dialog')) $('#token-dialog').close(); });
+      $$('[data-close="queue-create-dialog"]').forEach(button => button.addEventListener('click', () => $('#queue-create-dialog').close()));
+      $('#queue-create-dialog').addEventListener('click', event => { if (event.target === $('#queue-create-dialog')) $('#queue-create-dialog').close(); });
+      $('#queue-create-form').addEventListener('submit', async event => {
+        event.preventDefault();
+        $('[data-dialog-error]', $('#queue-create-dialog')).hidden = true;
+        const button = $('#create-queue-submit');
+        button.disabled = true;
+        const name = $('#new-queue-name').value.trim();
+        try {
+          const result = await api('/api/queues', { method: 'POST', body: JSON.stringify({ name }) });
+          $('#queue-create-dialog').close();
+          showToast(result.created ? `Queue “${name}” created` : `Queue “${name}” already exists`);
+          await refreshData();
+        } catch (error) { setError(error); }
+        finally { button.disabled = false; }
+      });
+      const themePreference = storageGet('localStorage', 'broccoliQueueTheme');
+      const storedTheme = themePreference === 'dark' || themePreference === 'light'
+        ? themePreference
+        : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.dataset.theme = storedTheme;
+      $('#theme-toggle').setAttribute('aria-pressed', String(storedTheme === 'dark'));
+      $('#theme-toggle').setAttribute('aria-label', storedTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+      void refreshData();
+      setInterval(() => { void refreshData(); }, 5000);
+    })();
+  </script>
+</body>
+</html>
