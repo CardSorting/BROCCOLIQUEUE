@@ -30,6 +30,8 @@ export interface QueueOptions {
   defaultJobOptions?: JobOptions
   /** Terminal job retention window. Defaults to 7 days. */
   retentionMs?: number
+  /** Maximum retained terminal jobs. Omit to retain by age only. */
+  maxTerminalJobs?: number
   /** Coalesce concurrent queue writes before syncing the WAL. Defaults to 0 ms. */
   flushBatchDelayMs?: number
   /** Maximum UTF-8 JSON size of one job payload. Defaults to 1 MiB. */

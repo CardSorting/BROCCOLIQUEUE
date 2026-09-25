@@ -320,13 +320,17 @@ test('cancellation aborts an active handler and prevents a late completion', asy
   t.after(() => closeRuntime(runtime))
   const job = await runtime.queue.add('cancel', { value: 1 })
   let handlerAborted = false
+  let markHandlerStarted
+  const handlerStarted = new Promise(resolve => { markHandlerStarted = resolve })
   const worker = runtime.queue.process('cancel', async (_job, { signal }) => {
+    markHandlerStarted()
     await new Promise(resolve => {
       signal.addEventListener('abort', () => { handlerAborted = true; resolve() }, { once: true })
     })
   }, { pollingIntervalMs: 10 })
   await worker.start()
   await waitFor(() => runtime.queue.getJob(job.id).state === 'active')
+  await handlerStarted
   assert.equal(await runtime.queue.cancel(job.id), true)
   await waitFor(() => worker.activeCount === 0)
 
@@ -334,15 +338,46 @@ test('cancellation aborts an active handler and prevents a late completion', asy
   assert.equal(runtime.queue.getJob(job.id).state, 'cancelled')
 })
 
+test('waiting-only cancellation never aborts a claimed job', async t => {
+  const runtime = await createRuntime()
+  t.after(() => closeRuntime(runtime))
+  const waiting = await runtime.queue.add('cancel-waiting-only', { value: 'waiting' })
+  assert.equal(await runtime.queue.cancelWaiting(waiting.id), true)
+  assert.equal(runtime.queue.getJob(waiting.id).state, 'cancelled')
+
+  const active = await runtime.queue.add('cancel-waiting-only', { value: 'active' })
+  let handlerAborted = false
+  let markHandlerStarted
+  const handlerStarted = new Promise(resolve => { markHandlerStarted = resolve })
+  const worker = runtime.queue.process('cancel-waiting-only', async (_job, { signal }) => {
+    markHandlerStarted()
+    await new Promise(resolve => signal.addEventListener('abort', () => { handlerAborted = true; resolve() }, { once: true }))
+  }, { pollingIntervalMs: 10 })
+  await worker.start()
+  await waitFor(() => runtime.queue.getJob(active.id).state === 'active')
+  await handlerStarted
+  assert.equal(await runtime.queue.cancelWaiting(active.id), false)
+  assert.equal(runtime.queue.getJob(active.id).state, 'active')
+  assert.equal(handlerAborted, false)
+
+  assert.equal(await runtime.queue.cancel(active.id), true)
+  await waitFor(() => worker.activeCount === 0)
+  assert.equal(runtime.queue.getJob(active.id).state, 'cancelled')
+})
+
 test('worker drain keeps an active job lease renewed until its handler finishes', async t => {
   const runtime = await createRuntime()
   t.after(() => closeRuntime(runtime))
   const job = await runtime.queue.add('drain', { value: 1 })
+  let markHandlerStarted
+  const handlerStarted = new Promise(resolve => { markHandlerStarted = resolve })
   const worker = runtime.queue.process('drain', async () => {
+    markHandlerStarted()
     await new Promise(resolve => setTimeout(resolve, 900))
   }, { pollingIntervalMs: 10, leaseDurationMs: 500 })
   await worker.start()
   await waitFor(() => runtime.queue.getJob(job.id).state === 'active')
+  await handlerStarted
 
   await Promise.all([
     worker.stop({ drainTimeoutMs: 1_500 }),
@@ -492,6 +527,22 @@ test('retention removes terminal jobs in bounded batches', async t => {
   assert.equal(await runtime.queue.prune({ batchSize: 1 }), 1)
   assert.equal(runtime.queue.getJob(job.id), null)
   assert.equal(runtime.queue.getQueue('retention').counts.completed, 0)
+})
+
+test('maxTerminalJobs retains only the newest terminal records', async t => {
+  const runtime = await createRuntime({ retentionMs: 60_000, maxTerminalJobs: 2 })
+  t.after(() => closeRuntime(runtime))
+  const jobs = await runtime.queue.addBulk([0, 1, 2].map(value => ({ name: 'bounded', data: { value } })))
+  const claims = runtime.queue.claimReady('bounded', 'worker', 3, 1_000)
+  await runtime.db.flush()
+  for (const [index, claim] of claims.entries()) {
+    await runtime.queue.completeClaim(claim.job.id, claim.token, null)
+    if (index < claims.length - 1) await new Promise(resolve => setTimeout(resolve, 3))
+  }
+
+  assert.equal(await runtime.queue.prune(), 1)
+  assert.equal(runtime.queue.getJob(jobs[0].id), null)
+  assert.equal(runtime.queue.getQueue('bounded').counts.completed, 2)
 })
 
 test('automatic retention catches up through multiple bounded batches', async t => {

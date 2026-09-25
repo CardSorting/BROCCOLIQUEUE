@@ -249,6 +249,7 @@ export class BroccoliQueue extends EventEmitter {
   #flushWaiters: FlushWaiter[] = []
   #flushBatchDelayMs: number
   #retentionMs: number
+  #maxTerminalJobs: number | undefined
   #startedAt = 0
   #startPromise: Promise<this> | undefined
   #closePromise: Promise<void> | undefined
@@ -278,6 +279,8 @@ export class BroccoliQueue extends EventEmitter {
       'defaultJobOptions must be an object')
     this.#retentionMs = options.retentionMs ?? 7 * 24 * 60 * 60 * 1_000
     safeInteger(this.#retentionMs, 'retentionMs', 0)
+    this.#maxTerminalJobs = options.maxTerminalJobs
+    if (this.#maxTerminalJobs !== undefined) safeInteger(this.#maxTerminalJobs, 'maxTerminalJobs', 0, 1_000_000)
     this.#flushBatchDelayMs = options.flushBatchDelayMs ?? 0
     safeInteger(this.#flushBatchDelayMs, 'flushBatchDelayMs', 0, 1_000)
     this.#maxJobDataBytes = options.maxJobDataBytes ?? 1_048_576
@@ -564,13 +567,23 @@ export class BroccoliQueue extends EventEmitter {
     this.#writeJob(next, current)
     await this.#flushWrites()
     this.#wakeWorkers(current.queueName)
+    this.#emitSafely('retrying', publicJob(next))
     return { retried: true, job: publicJob(next) }
   }
 
   async cancel (id: string): Promise<boolean> {
+    return await this.#cancel(id, ['waiting', 'delayed', 'active'])
+  }
+
+  /** Cancel only work that has not been claimed by a worker. */
+  async cancelWaiting (id: string): Promise<boolean> {
+    return await this.#cancel(id, ['waiting', 'delayed'])
+  }
+
+  async #cancel (id: string, eligibleStates: readonly JobState[]): Promise<boolean> {
     this.#assertStarted()
     const current = this.#jobs.get(id)
-    if (!current || !['waiting', 'delayed', 'active'].includes(current.state)) return false
+    if (!current || !eligibleStates.includes(current.state)) return false
     const now = Date.now()
     const next: StoredJob = {
       ...current,
@@ -584,6 +597,7 @@ export class BroccoliQueue extends EventEmitter {
     this.#writeJob(next, current)
     for (const controller of this.#controllers.get(id) ?? []) controller.abort(new Error('Job was cancelled'))
     await this.#flushWrites()
+    this.#emitSafely('cancelled', publicJob(next))
     return true
   }
 
@@ -591,6 +605,7 @@ export class BroccoliQueue extends EventEmitter {
     this.#assertStarted()
     const job = this.#jobs.get(id)
     if (!job || job.state === 'active') return false
+    const visible = publicJob(job)
     const deleted = this.#jobs.delete(id)
     if (deleted) {
       this.#adjustCount(job.queueName, job.state, -1)
@@ -599,11 +614,12 @@ export class BroccoliQueue extends EventEmitter {
       if (job.state === 'waiting' || job.state === 'delayed') this.#compactQueueIndex(job.queueName)
       if (TERMINAL_STATES.includes(job.state)) this.#compactTerminalIndex()
       await this.#flushWrites()
+      this.#emitSafely('removed', visible)
     }
     return deleted
   }
 
-  /** Remove terminal records older than the queue retention window in bounded batches. */
+  /** Remove expired or over-cap terminal records in bounded batches. */
   async prune (options: { retentionMs?: number; batchSize?: number } = {}): Promise<number> {
     this.#assertStarted()
     const retentionMs = options.retentionMs ?? this.#retentionMs
@@ -614,18 +630,30 @@ export class BroccoliQueue extends EventEmitter {
     let removed = 0
     let inspected = 0
     const maxInspected = batchSize * 4
-    while (removed < batchSize && inspected < maxInspected && (this.#terminal.peek()?.finishedAt ?? Infinity) <= cutoff) {
+    while (removed < batchSize && inspected < maxInspected) {
+      const next = this.#terminal.peek()
+      if (!next) break
+      const current = this.#jobs.get(next.id)
+      const matches = current && TERMINAL_STATES.includes(current.state) && current.finishedAt === next.finishedAt
+      if (matches && current.finishedAt! > cutoff
+        && (this.#maxTerminalJobs === undefined || this.#terminalCount <= this.#maxTerminalJobs)) break
       inspected++
       const entry = this.#terminal.pop()!
       const job = this.#jobs.get(entry.id)
-      if (!job || !TERMINAL_STATES.includes(job.state) || job.finishedAt !== entry.finishedAt || job.finishedAt > cutoff) continue
+      if (!job || !TERMINAL_STATES.includes(job.state) || job.finishedAt !== entry.finishedAt) continue
+      const expired = job.finishedAt <= cutoff
+      const overLimit = this.#maxTerminalJobs !== undefined && this.#terminalCount > this.#maxTerminalJobs
+      if (!expired && !overLimit) continue
       if (this.#jobs.delete(job.id)) {
         this.#adjustCount(job.queueName, job.state, -1)
         this.#terminalCount--
         removed++
       }
     }
-    if (removed) await this.#flushWrites()
+    if (removed) {
+      await this.#flushWrites()
+      this.#emitSafely('pruned', removed)
+    }
     return removed
   }
 
@@ -787,7 +815,10 @@ export class BroccoliQueue extends EventEmitter {
       }
       recovered++
     }
-    if (recovered) await this.#flushWrites()
+    if (recovered) {
+      await this.#flushWrites()
+      this.#emitSafely('recovered', recovered)
+    }
     return recovered
   }
 

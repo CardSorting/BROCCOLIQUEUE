@@ -93,9 +93,9 @@ See [Troubleshooting](TROUBLESHOOTING.md#startup-and-persistence) for step-by-st
 
 ## Retention and WAL compaction
 
-Terminal jobs are retained for seven days by default. Automatic maintenance checks every five seconds and may remove up to five batches of 5,000 expired terminal rows in a pass. Configure `retentionMs`, `maintenanceIntervalMs`, `maintenanceBatchSize`, and `maintenanceMaxBatches`, or call `queue.prune({ retentionMs, batchSize })` directly.
+Terminal jobs are retained for seven days by default. Automatic maintenance checks every five seconds and may remove up to five batches of 5,000 expired terminal rows in a pass. Configure `retentionMs`, `maintenanceIntervalMs`, `maintenanceBatchSize`, and `maintenanceMaxBatches`. `maxTerminalJobs` adds an optional count bound and prunes the oldest terminal rows first even before their age expires. Both age and count pruning use the same bounded maintenance batches; `queue.prune({ retentionMs, batchSize })` can also be called directly.
 
-Queue records remain after job pruning so pause state and queue identity survive cleanup. BroccoliDB's WAL is append-only until the host creates a checkpoint. After pruning a large history, checkpoint during a quiet period if reclaiming on-disk history matters.
+Queue records remain after job pruning so pause state and queue identity survive cleanup. BroccoliDB's WAL is append-only until the host compacts it or creates a checkpoint; BroccoliQueue does not compact the host database automatically. After pruning a large history, a host may use `db.compact()` during a quiet period when a named restore point is not needed, or create a checkpoint when history is required.
 
 ## Capacity checks
 

@@ -122,8 +122,9 @@ Worker controls:
 | `pause(name)` / `resume(name)` | Persist queue pause state. Pausing prevents new claims and lets active handlers continue. |
 | `retry(id, { delayMs? })` | Retry failed jobs, reset attempts and error/result fields, and return `{ retried, job }`. |
 | `cancel(id)` | Cancel waiting, delayed, or active work. Active local handlers receive an abort signal. |
+| `cancelWaiting(id)` | Atomically cancel waiting or delayed work only. Returns `false` if a worker already claimed the job. |
 | `delete(id)` | Delete non-active work. Returns `false` for a missing or active job. |
-| `prune({ retentionMs?, batchSize? })` | Remove expired terminal records; defaults to 250 rows per call, with a maximum batch of 5,000. |
+| `prune({ retentionMs?, batchSize? })` | Remove expired or over-cap terminal records; defaults to 250 rows per call, with a maximum batch of 5,000. |
 | `getHealth()` | Report `starting`, `healthy`, `degraded`, `closing`, or `stopped`. |
 | `close({ drainTimeoutMs? })` | Close dashboards started by this queue, stop workers, and flush writes. Does not stop the host's database. |
 
@@ -150,6 +151,7 @@ See [Dashboard exposure](operations.md#dashboard-exposure) before exposing the d
 | `namespace` | `broccoli_queue` | Table prefix; 1–48 letters, numbers, underscores, or hyphens. |
 | `defaultJobOptions` | `{}` | Instance defaults merge with queue-specific defaults, then per-job values override both. |
 | `retentionMs` | `604,800,000` (7 days) | Retention window for terminal jobs. |
+| `maxTerminalJobs` | unset | Optional cap on retained completed, failed, and cancelled jobs; oldest terminal records are pruned first. |
 | `flushBatchDelayMs` | `0` | Coalesce concurrent queue writes before `db.flush()`; 0–1,000 ms. |
 | `maxJobDataBytes` | `1,048,576` | Maximum serialized payload size. |
 | `maxJobResultBytes` | `1,048,576` | Maximum serialized handler result size. |
