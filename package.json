@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.4",
-    "@noorm/broccolidb": "git+https://github.com/CardSorting/ABroccoliDB.git#f085f3f",
+    "@noorm/broccolidb": "https://codeload.github.com/CardSorting/ABroccoliDB/tar.gz/f085f3f5dbceadc4cd6752b081ebfc51b02fe3f7",
     "typescript": "^6.0.3"
   },
   "license": "MIT",
