@@ -16,6 +16,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
     "test": "npm run build && node --test test/*.test.js",
     "bench": "npm run build && node bench/throughput.js",
     "docs:check": "node scripts/check-docs.mjs"
@@ -25,7 +26,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.4",
-    "@noorm/broccolidb": "file:../BroccoliDB",
+    "@noorm/broccolidb": "git+https://github.com/CardSorting/ABroccoliDB.git#f085f3f",
     "typescript": "^6.0.3"
   },
   "license": "MIT",
