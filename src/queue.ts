@@ -479,6 +479,20 @@ export class BroccoliQueue extends EventEmitter {
 
     const states = query.state === undefined ? undefined : Array.isArray(query.state) ? query.state : [query.state]
     for (const state of states ?? []) assert(STATES.includes(state), `unknown job state: ${state}`)
+    // Live work must remain discoverable even after terminal-job churn pushes
+    // its ID out of the bounded recent-history window.
+    if (states?.length && states.every(state => !TERMINAL_STATES.includes(state))) {
+      const before = query.beforeId === undefined ? undefined : this.#jobs.get(query.beforeId)
+      if (query.beforeId !== undefined && !before) return []
+      return this.#jobs.query({
+        where: {
+          state: { $in: states },
+          ...(query.queueName === undefined ? {} : { queueName: query.queueName }),
+          ...(before === undefined ? {} : { sequence: { $lt: before.sequence } })
+        },
+        sortBy: 'sequence', sortOrder: 'desc', limit, offset
+      }).map(job => publicJob<T>(job))
+    }
     const result: Job<T>[] = []
     let matched = 0
     const cursorIndex = query.beforeId === undefined ? this.#recentIds.length : this.#recentIds.lastIndexOf(query.beforeId)
@@ -790,6 +804,7 @@ export class BroccoliQueue extends EventEmitter {
     const now = Date.now()
     const leases = this.#leaseHeap(name)
     let recovered = 0
+    const recoveredJobs: StoredJob[] = []
     let inspected = 0
     const maxInspected = Math.max(64, limit * 8)
     while (recovered < limit && inspected < maxInspected && (leases.peek()?.expiresAt ?? Infinity) <= now) {
@@ -810,6 +825,7 @@ export class BroccoliQueue extends EventEmitter {
         lockToken: undefined
       }
       this.#writeJob(next, latest)
+      recoveredJobs.push(next)
       for (const controller of this.#controllers.get(latest.id) ?? []) {
         controller.abort(new Error('Job lease expired before acknowledgment'))
       }
@@ -818,6 +834,7 @@ export class BroccoliQueue extends EventEmitter {
     if (recovered) {
       await this.#flushWrites()
       this.#emitSafely('recovered', recovered)
+      for (const job of recoveredJobs) this.#emitSafely(job.state === 'failed' ? 'failed' : 'retrying', publicJob(job))
     }
     return recovered
   }
@@ -1298,6 +1315,7 @@ class QueueWorker implements WorkerHandle {
   #batchSize: number
   #pollingIntervalMs: number
   #leaseDurationMs: number
+  #keepAlive: boolean
   #running = false
   #paused = false
   #pumpPromise: Promise<void> | undefined
@@ -1313,6 +1331,8 @@ class QueueWorker implements WorkerHandle {
     this.#batchSize = options.batchSize ?? 32
     this.#pollingIntervalMs = options.pollingIntervalMs ?? 100
     this.#leaseDurationMs = options.leaseDurationMs ?? 30_000
+    this.#keepAlive = options.keepAlive ?? true
+    assert(typeof this.#keepAlive === 'boolean', 'keepAlive must be a boolean')
     this.id = options.workerId ?? `worker-${randomUUID()}`
     assert(typeof this.id === 'string' && this.id.length > 0 && this.id.length <= 128, 'workerId must be 1-128 characters')
     safeInteger(this.#concurrency, 'concurrency', 1, 10_000)
@@ -1518,5 +1538,9 @@ class QueueWorker implements WorkerHandle {
       this.#timer = undefined
       void this.#pump()
     }, delayMs)
+    if (!this.#keepAlive && this.#active.size === 0 && this.#queue.getHealth().status !== 'closing') {
+      const counts = this.#queue.getQueue(this.queueName)?.counts
+      if (!counts?.waiting && !counts?.delayed && !counts?.active) this.#timer.unref()
+    }
   }
 }

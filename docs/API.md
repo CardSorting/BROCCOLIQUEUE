@@ -99,6 +99,7 @@ await worker.start()
 | `concurrency` | `1` | Number of handlers this worker may run at once; integer from 1 to 10,000. |
 | `batchSize` | `32` | Maximum jobs claimed in one persistence batch; integer from 1 to 500. |
 | `pollingIntervalMs` | `100` | Idle polling interval; integer from 10 to 60,000. New local work wakes workers immediately. |
+| `keepAlive` | `true` | Keep Node alive while idle. Set to `false` for an embedded runtime; pending and active jobs still keep the process alive. |
 | `leaseDurationMs` | `30,000` | Lease time, renewed automatically while a handler is active; integer from 500 ms to 24 hours. |
 | `workerId` | Generated ID | Optional stable label up to 128 characters, shown during job inspection. |
 
@@ -118,7 +119,7 @@ Worker controls:
 | `getOverview()` | Return queues, workers, totals, start time, and health. |
 | `getWorkers()` | Read worker IDs, active counts, concurrency, and run state. |
 | `getJob(id)` | Read any job still present in the jobs table, or `null`. |
-| `getJobs(query?)` | Read up to 500 jobs from the most recent 12,000-job inspection window; default page size is 50. |
+| `getJobs(query?)` | Read up to 500 jobs; default page size is 50. History uses the most recent 12,000-job inspection window; explicit live-state queries cover all retained live work. |
 | `pause(name)` / `resume(name)` | Persist queue pause state. Pausing prevents new claims and lets active handlers continue. |
 | `retry(id, { delayMs? })` | Retry failed jobs, reset attempts and error/result fields, and return `{ retried, job }`. |
 | `cancel(id)` | Cancel waiting, delayed, or active work. Active local handlers receive an abort signal. |
@@ -128,7 +129,7 @@ Worker controls:
 | `getHealth()` | Report `starting`, `healthy`, `degraded`, `closing`, or `stopped`. |
 | `close({ drainTimeoutMs? })` | Close dashboards started by this queue, stop workers, and flush writes. Does not stop the host's database. |
 
-`getJobs()` accepts `queueName`, `state` (one state or an array), `limit`, `offset`, and `beforeId`. The recent inspection window is a deliberate bound; use `getJob(id)` for any known retained record.
+`getJobs()` accepts `queueName`, `state` (one state or an array), `limit`, `offset`, and `beforeId`. A nonempty state filter containing only `waiting`, `delayed`, and/or `active` queries indexed live records outside the recent window, ordered newest sequence first. This keeps recovery and cancellation complete during terminal-history churn. `beforeId` supplies an exclusive sequence cursor in that mode; an unknown ID returns an empty page. Queries without a state filter, or including terminal states, retain the bounded history window. Use `getJob(id)` for any known retained record.
 
 ## Dashboard
 

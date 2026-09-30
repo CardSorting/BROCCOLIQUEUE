@@ -47,6 +47,8 @@ export interface QueueOptions {
     maintenanceMaxBatches?: number;
 }
 export interface WorkerOptions {
+    /** Keep the process alive while idle. Pending/active jobs always keep it alive. Defaults to true. */
+    keepAlive?: boolean;
     /** Maximum concurrently running handlers. Defaults to 1. */
     concurrency?: number;
     /** Maximum jobs claimed in one persistence batch. Defaults to 32. */

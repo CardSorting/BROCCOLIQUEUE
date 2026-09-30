@@ -30,6 +30,19 @@ async function waitFor (predicate, timeoutMs = 3_000) {
   assert.fail('condition did not become true before timeout')
 }
 
+test('an embedded worker can close its queue from a completion listener', async t => {
+  const runtime = await createRuntime()
+  t.after(() => closeRuntime(runtime))
+  let closing
+  runtime.queue.on('completed', () => { closing = runtime.queue.close() })
+  const worker = runtime.queue.process('embedded', async () => 'done', { keepAlive: false })
+  await worker.start()
+  await runtime.queue.add('embedded', {})
+  await waitFor(() => closing !== undefined)
+  await closing
+  assert.equal(runtime.queue.isStarted, false)
+})
+
 test('validates an entire producer batch before changing BroccoliDB tables', async t => {
   const runtime = await createRuntime()
   t.after(() => closeRuntime(runtime))
@@ -386,6 +399,30 @@ test('worker drain keeps an active job lease renewed until its handler finishes'
 
   assert.equal(runtime.queue.getJob(job.id).state, 'completed')
   assert.equal(worker.isRunning, false)
+})
+
+test('live state queries survive terminal history churn and paginate oldest work', async t => {
+  const runtime = await createRuntime()
+  t.after(() => closeRuntime(runtime))
+  const first = await runtime.queue.add('persist', { value: 'oldest' })
+  const second = await runtime.queue.add('persist', { value: 'next' }, { delayMs: 60_000 })
+  await runtime.queue.close()
+  // Seed terminal history directly so this regression tests recovery from a
+  // large persisted database without 12,000 individual fsyncs.
+  const table = runtime.db.getTable(`${runtime.queue.namespace}_jobs`)
+  const template = table.get(first.id)
+  for (let sequence = 3; sequence <= 12_010; sequence++) {
+    const id = `history-${sequence}`
+    table.put(id, { ...template, id, sequence, state: 'completed', finishedAt: Date.now() })
+  }
+  await runtime.db.flush()
+  await runtime.queue.start()
+  assert.equal(runtime.queue.getJobs().some(job => job.id === first.id), false)
+  const live = runtime.queue.getJobs({ queueName: 'persist', state: ['waiting', 'delayed', 'active'], limit: 1 })
+  assert.equal(live[0].id, second.id)
+  assert.deepEqual(runtime.queue.getJobs({ state: ['waiting', 'delayed'], beforeId: second.id }).map(job => job.id), [first.id])
+  assert.deepEqual(runtime.queue.getJobs({ state: 'waiting', beforeId: 'unknown' }), [])
+  assert.deepEqual(runtime.queue.getJobs({ queueName: 'other', state: 'waiting' }), [])
 })
 
 test('stored jobs survive a clean BroccoliDB restart and keep idempotency keys', async t => {
